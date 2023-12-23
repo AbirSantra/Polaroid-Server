@@ -1,0 +1,19 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "Polaroid Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Polaroid",
+    "MERN",
+    "Social",
+    "Media",
+    "Abir",
+    "Santra"
+  ],
+  "author": "Abir Santra",
+  "license": "ISC"
+}
