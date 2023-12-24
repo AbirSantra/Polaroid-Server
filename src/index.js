@@ -2,6 +2,8 @@ import dotenv from "dotenv";
 import express from "express";
 import mongoose from "mongoose";
 import connectDatabase from "./db/index.js";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
 /* SERVER INITIALIZATION */
 const app = express();
@@ -9,6 +11,16 @@ dotenv.config({ path: "./.env" });
 connectDatabase();
 
 /* MIDDLEWARES */
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN,
+    credentials: true,
+  })
+);
+app.use(express.json({ limit: "16kb" }));
+app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(express.static("public"));
+app.use(cookieParser());
 
 /* ROUTES */
 
