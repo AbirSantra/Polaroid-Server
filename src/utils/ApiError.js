@@ -1,10 +1,5 @@
-class ApiError extends Error {
-  constructor(
-    statusCode,
-    message = "Something went wrong!",
-    errors = [],
-    stack = ""
-  ) {
+class CustomError extends Error {
+  constructor(statusCode, message, errors, stack) {
     super(message);
     this.statusCode = statusCode;
     this.data = null;
@@ -20,4 +15,25 @@ class ApiError extends Error {
   }
 }
 
-export { ApiError };
+const ApiErrorHandler = (err, req, res, next) => {
+  const {
+    statusCode = 500,
+    message = "Internal Server Error",
+    data,
+    success,
+    error,
+    stack,
+  } = err;
+
+  console.error(err);
+
+  res.status(statusCode).json({
+    success: success,
+    statusCode: statusCode,
+    message: message,
+    data: data,
+    error: error,
+  });
+};
+
+export { CustomError };
