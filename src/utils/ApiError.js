@@ -1,11 +1,11 @@
 class CustomError extends Error {
-  constructor(statusCode, message, errors, stack) {
+  constructor(statusCode, message, errors = [], stack = "") {
     super(message);
     this.statusCode = statusCode;
     this.data = null;
     this.message = message;
     this.success = false;
-    this.error = errors;
+    this.errors = errors;
 
     if (stack) {
       this.stack = stack;
@@ -21,7 +21,7 @@ const ApiErrorHandler = (err, req, res, next) => {
     message = "Internal Server Error",
     data,
     success,
-    error,
+    errors,
     stack,
   } = err;
 
@@ -32,8 +32,8 @@ const ApiErrorHandler = (err, req, res, next) => {
     statusCode: statusCode,
     message: message,
     data: data,
-    error: error,
+    errors: errors,
   });
 };
 
-export { CustomError };
+export { CustomError, ApiErrorHandler };
