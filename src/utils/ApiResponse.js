@@ -7,4 +7,14 @@ class ApiResponse {
   }
 }
 
-export { ApiResponse };
+const ApiResponseHandler = ({ res, statusCode = 200, message, data }) => {
+  const apiResponse = new ApiResponse(statusCode, data, message);
+  res.status(apiResponse.statusCode).json({
+    success: apiResponse.success,
+    statusCode: apiResponse.statusCode,
+    message: apiResponse.message,
+    data: apiResponse.data,
+  });
+};
+
+export { ApiResponse, ApiResponseHandler };
