@@ -14,6 +14,7 @@ const ApiResponseHandler = ({ res, statusCode = 200, message, data }) => {
     statusCode: apiResponse.statusCode,
     message: apiResponse.message,
     data: apiResponse.data,
+    error: null,
   });
 };
 
