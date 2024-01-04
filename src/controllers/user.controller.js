@@ -2,6 +2,7 @@ import { userModel } from "../models/user.model.js";
 import { CustomError } from "../utils/ApiError.js";
 import { ApiResponseHandler } from "../utils/ApiResponse.js";
 import { requiredFieldsChecker } from "../utils/requiredFieldsChecker.js";
+import jwt from "jsonwebtoken";
 
 const sanitizeUser = (user) => {
   const sanitizedUser = user.toObject();
@@ -168,6 +169,80 @@ export const logoutUser = async (req, res, next) => {
       statusCode: 200,
       message: "User logged out successfully",
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const refreshAccessToken = async (req, res, next) => {
+  try {
+    const incomingRefreshToken =
+      req.cookies.refreshToken || req.body.refreshToken;
+
+    if (!incomingRefreshToken) {
+      throw new CustomError({
+        statusCode: 401,
+        message: "Refresh token not found!",
+      });
+    }
+
+    jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_SECRET,
+      async (error, decodedToken) => {
+        if (error) {
+          return next(
+            new CustomError({
+              statusCode: 401,
+              message: "Refresh token expired!",
+            })
+          );
+        } else {
+          const user = await userModel.findById(decodedToken.userId);
+
+          if (!user) {
+            return next(
+              new CustomError({
+                statusCode: 401,
+                message: "Refresh Token invalid",
+              })
+            );
+          }
+
+          if (incomingRefreshToken !== user?.refreshToken) {
+            return next(
+              new CustomError({
+                statusCode: 401,
+                message: "Refresh token invalid!",
+              })
+            );
+          }
+
+          const options = {
+            httpOnly: true,
+            secure: true,
+          };
+
+          const { accessToken, refreshToken, updatedUser } =
+            await generateTokens(user._id);
+
+          res.cookie("accessToken", accessToken, options);
+          res.cookie("refreshToken", refreshToken, options);
+
+          const sanitizedUser = sanitizeUser(updatedUser);
+
+          ApiResponseHandler({
+            res: res,
+            statusCode: 200,
+            message: "Access token refreshed successfully",
+            data: {
+              user: sanitizedUser,
+              accessToken: accessToken,
+            },
+          });
+        }
+      }
+    );
   } catch (error) {
     next(error);
   }
