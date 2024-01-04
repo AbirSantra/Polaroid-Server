@@ -5,6 +5,7 @@ import connectDatabase from "./db/index.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { ApiErrorHandler } from "./utils/ApiError.js";
+import { userRouter } from "./routes/user.route.js";
 
 /* SERVER INITIALIZATION */
 const app = express();
@@ -24,6 +25,7 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 /* ROUTES */
+app.use("/api/user", userRouter);
 
 /* HANDLERS */
 app.use(ApiErrorHandler);
