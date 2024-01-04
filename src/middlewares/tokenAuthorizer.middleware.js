@@ -16,21 +16,32 @@ export const tokenAuthorizer = async (req, res, next) => {
       });
     }
 
-    const decodedToken = jwt.verify(token, process.env.ACCESS_SECRET);
+    jwt.verify(token, process.env.ACCESS_SECRET, async (error, decoded) => {
+      if (error) {
+        return next(
+          new CustomError({
+            statusCode: 403,
+            message: "Access token expired!",
+          })
+        );
+      }
 
-    const user = await userModel
-      .findById(decodedToken?.userId)
-      .select("-password -refreshToken");
+      const user = await userModel
+        .findById(decoded?.userId)
+        .select("-password -refreshToken");
 
-    if (!user) {
-      throw new CustomError({
-        statusCode: 403,
-        message: "Access token invalid or expired!",
-      });
-    }
+      if (!user) {
+        return next(
+          new CustomError({
+            statusCode: 401,
+            message: "Access token invalid!",
+          })
+        );
+      }
 
-    req.user = user;
-    next();
+      req.user = user;
+      next();
+    });
   } catch (error) {
     next(error);
   }
