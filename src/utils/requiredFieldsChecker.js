@@ -1,14 +1,12 @@
-const { CustomError } = require("./ApiError");
+import { CustomError } from "./ApiError.js";
 
-const requiredFieldsChecker = (req, fields) => {
+export const requiredFieldsChecker = (req, fields) => {
   const missingFields = fields.filter((field) => !(field in req.body));
 
   if (missingFields.length > 0) {
     throw new CustomError({
-      status: 400,
+      statusCode: 400,
       message: `Missing required fields: ${missingFields.join(", ")}`,
     });
   }
 };
-
-module.exports = { requiredFieldsChecker };
