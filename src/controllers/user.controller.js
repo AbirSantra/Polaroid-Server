@@ -144,3 +144,31 @@ export const loginUser = async (req, res, next) => {
     next(error);
   }
 };
+
+export const logoutUser = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    await userModel.findByIdAndUpdate(user._id, {
+      $set: {
+        refreshToken: null,
+      },
+    });
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
+
+    ApiResponseHandler({
+      res: res,
+      statusCode: 200,
+      message: "User logged out successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
