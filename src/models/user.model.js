@@ -64,6 +64,9 @@ const userSchema = new mongooose.Schema(
         }`;
       },
     },
+    bio: {
+      type: String,
+    },
     banner: {
       type: String,
     },
