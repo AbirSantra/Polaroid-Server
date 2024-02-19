@@ -247,3 +247,20 @@ export const refreshAccessToken = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getCurrentUser = async (req, res, next) => {
+  try {
+    /* Get the current user from the req.user set by auth middleware */
+    const user = req.user;
+
+    /* Send response */
+    ApiResponseHandler({
+      res: res,
+      statusCode: 200,
+      message: "User logged in successfully",
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
