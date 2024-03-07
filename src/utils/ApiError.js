@@ -25,7 +25,7 @@ const ApiErrorHandler = (err, req, res, next) => {
     stack,
   } = err;
 
-  console.error(err);
+  console.error(err.message);
 
   res.status(statusCode).json({
     success: success,
