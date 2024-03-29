@@ -1,7 +1,9 @@
+import { Result } from "./result.js";
+
 class CustomError extends Error {
-  constructor({ statusCode, message, error = {}, stack = "" }) {
+  constructor({ status, message, error = {}, stack = "" }) {
     super(message);
-    this.statusCode = statusCode;
+    this.status = status;
     this.data = null;
     this.message = message;
     this.success = false;
@@ -17,23 +19,25 @@ class CustomError extends Error {
 
 const ApiErrorHandler = (err, req, res, next) => {
   const {
-    statusCode = 500,
+    status = 500,
     message = "Internal Server Error",
     data,
-    success,
+    success = false,
     error,
     stack,
   } = err;
 
   console.error(err.message);
 
-  res.status(statusCode).json({
-    success: success,
-    statusCode: statusCode,
-    message: message,
-    data: data,
-    error: error,
-  });
+  res.status(status).json(
+    new Result({
+      status: status,
+      success: success,
+      error: error,
+      message: message,
+      data: data,
+    })
+  );
 };
 
 export { CustomError, ApiErrorHandler };

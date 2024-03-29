@@ -1,21 +1,29 @@
+import { Result } from "./result.js";
+
 class ApiResponse {
-  constructor(statusCode, data, message = "Request Successful!") {
-    this.statusCode = statusCode;
+  constructor({ status, data, message = "Request Successful!" }) {
+    this.status = status;
     this.data = data;
     this.message = message;
-    this.success = statusCode < 400;
+    this.success = status < 400;
   }
 }
 
-const ApiResponseHandler = ({ res, statusCode = 200, message, data }) => {
-  const apiResponse = new ApiResponse(statusCode, data, message);
-  res.status(apiResponse.statusCode).json({
-    success: apiResponse.success,
-    statusCode: apiResponse.statusCode,
-    message: apiResponse.message,
-    data: apiResponse.data,
-    error: null,
+const ApiResponseHandler = ({ res, status = 200, message, data }) => {
+  const apiResponse = new ApiResponse({
+    status: status,
+    data: data,
+    message: message,
   });
+  res.status(apiResponse.status).json(
+    new Result({
+      status: apiResponse.status,
+      success: apiResponse.success,
+      error: null,
+      message: apiResponse.message,
+      data: apiResponse.data,
+    })
+  );
 };
 
 export { ApiResponse, ApiResponseHandler };

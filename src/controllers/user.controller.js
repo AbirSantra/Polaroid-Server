@@ -3,6 +3,7 @@ import { CustomError } from "../utils/ApiError.js";
 import { ApiResponseHandler } from "../utils/ApiResponse.js";
 import { requiredFieldsChecker } from "../utils/requiredFieldsChecker.js";
 import jwt from "jsonwebtoken";
+import { Result } from "../utils/result.js";
 
 const sanitizeUser = (user) => {
   const sanitizedUser = user.toObject();
@@ -22,15 +23,20 @@ const generateTokens = async (userId) => {
     const updatedUser = await user.save();
     if (!updatedUser) {
       throw new CustomError({
-        statusCode: 500,
+        status: 500,
         message: "Could not save token to user",
       });
     }
 
-    return { accessToken, refreshToken, updatedUser };
+    return new Result({
+      status: 200,
+      success: true,
+      message: `Successfully generated access and refresh tokens for user: ${user._id}`,
+      data: { accessToken, refreshToken, updatedUser },
+    });
   } catch (error) {
-    throw new CustomError({
-      statusCode: 500,
+    return new Result({
+      status: 500,
       message: `Error occurred while generating tokens: ${error.message}`,
     });
   }
@@ -47,7 +53,7 @@ export const registerUser = async (req, res, next) => {
     });
     if (existingUser) {
       throw new CustomError({
-        statusCode: 400,
+        status: 400,
         message: "User with same email or username already exists!",
       });
     }
@@ -62,7 +68,7 @@ export const registerUser = async (req, res, next) => {
     const user = await userObj.save();
     if (!user) {
       throw new CustomError({
-        statusCode: 500,
+        status: 500,
         message: "Error occurred while creating new user",
       });
     }
@@ -73,14 +79,14 @@ export const registerUser = async (req, res, next) => {
       .select("-password -refreshToken");
     if (!newUser) {
       throw new CustomError({
-        statusCode: 500,
+        status: 500,
         message: "Error occurred while trying to fetch new user",
       });
     }
 
     ApiResponseHandler({
       res: res,
-      statusCode: 200,
+      status: 200,
       message: "User created successfully",
       data: newUser,
     });
@@ -101,7 +107,7 @@ export const loginUser = async (req, res, next) => {
     });
     if (!user) {
       throw new CustomError({
-        statusCode: 400,
+        status: 400,
         message: "User not found!",
       });
     }
@@ -110,15 +116,16 @@ export const loginUser = async (req, res, next) => {
     const isPasswordValid = await user.isPasswordCorrect(password);
     if (!isPasswordValid) {
       throw new CustomError({
-        statusCode: 400,
+        status: 400,
         message: "Wrong password!",
       });
     }
 
     /* Generate access and refresh tokens */
-    const { accessToken, refreshToken, updatedUser } = await generateTokens(
-      user._id
-    );
+    const { data: tokenResult } = await generateTokens(user._id);
+    const accessToken = tokenResult.accessToken;
+    const refreshToken = tokenResult.refreshToken;
+    const updatedUser = tokenResult.updatedUser;
 
     /* Set cookies */
     const cookieOptions = {
@@ -135,7 +142,7 @@ export const loginUser = async (req, res, next) => {
     /* Send response */
     ApiResponseHandler({
       res: res,
-      statusCode: 200,
+      status: 200,
       message: "User logged in successfully",
       data: {
         user: sanitizedUser,
@@ -167,7 +174,7 @@ export const logoutUser = async (req, res, next) => {
 
     ApiResponseHandler({
       res: res,
-      statusCode: 200,
+      status: 200,
       message: "User logged out successfully",
     });
   } catch (error) {
@@ -182,7 +189,7 @@ export const refreshAccessToken = async (req, res, next) => {
 
     if (!incomingRefreshToken) {
       throw new CustomError({
-        statusCode: 401,
+        status: 401,
         message: "Refresh token not found!",
       });
     }
@@ -194,7 +201,7 @@ export const refreshAccessToken = async (req, res, next) => {
         if (error) {
           return next(
             new CustomError({
-              statusCode: 401,
+              status: 401,
               message: "Refresh token expired!",
             })
           );
@@ -204,7 +211,7 @@ export const refreshAccessToken = async (req, res, next) => {
           if (!user) {
             return next(
               new CustomError({
-                statusCode: 401,
+                status: 401,
                 message: "Refresh Token invalid",
               })
             );
@@ -213,7 +220,7 @@ export const refreshAccessToken = async (req, res, next) => {
           if (incomingRefreshToken !== user?.refreshToken) {
             return next(
               new CustomError({
-                statusCode: 401,
+                status: 401,
                 message: "Refresh token invalid!",
               })
             );
@@ -224,8 +231,10 @@ export const refreshAccessToken = async (req, res, next) => {
             secure: true,
           };
 
-          const { accessToken, refreshToken, updatedUser } =
-            await generateTokens(user._id);
+          const { data: tokenResult } = await generateTokens(user._id);
+          const accessToken = tokenResult.accessToken;
+          const refreshToken = tokenResult.refreshToken;
+          const updatedUser = tokenResult.updatedUser;
 
           res.cookie("accessToken", accessToken, options);
           res.cookie("refreshToken", refreshToken, options);
@@ -234,7 +243,7 @@ export const refreshAccessToken = async (req, res, next) => {
 
           ApiResponseHandler({
             res: res,
-            statusCode: 200,
+            status: 200,
             message: "Access token refreshed successfully",
             data: {
               user: sanitizedUser,
@@ -257,7 +266,7 @@ export const getCurrentUser = async (req, res, next) => {
     /* Send response */
     ApiResponseHandler({
       res: res,
-      statusCode: 200,
+      status: 200,
       message: "User logged in successfully",
       data: user,
     });

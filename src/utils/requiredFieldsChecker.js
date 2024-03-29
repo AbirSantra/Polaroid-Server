@@ -5,7 +5,7 @@ export const requiredFieldsChecker = (req, fields) => {
 
   if (missingFields.length > 0) {
     throw new CustomError({
-      statusCode: 400,
+      status: 400,
       message: `Missing required fields: ${missingFields.join(", ")}`,
     });
   }

@@ -11,37 +11,37 @@ export const tokenAuthorizer = async (req, res, next) => {
 
     if (!token) {
       throw new CustomError({
-        statusCode: 401,
+        status: 401,
         message: "Access token not found!",
       });
     }
 
-    jwt.verify(token, process.env.ACCESS_SECRET, async (error, decoded) => {
-      if (error) {
-        return next(
+    await jwt.verify(
+      token,
+      process.env.ACCESS_SECRET,
+      async (error, decoded) => {
+        if (error) {
           new CustomError({
-            statusCode: 403,
+            status: 403,
             message: "Access token expired!",
-          })
-        );
-      }
+          });
+        }
 
-      const user = await userModel
-        .findById(decoded?.userId)
-        .select("-password -refreshToken");
+        const user = await userModel
+          .findById(decoded?.userId)
+          .select("-password -refreshToken");
 
-      if (!user) {
-        return next(
+        if (!user) {
           new CustomError({
-            statusCode: 401,
+            status: 401,
             message: "Access token invalid!",
-          })
-        );
-      }
+          });
+        }
 
-      req.user = user;
-      next();
-    });
+        req.user = user;
+        next();
+      }
+    );
   } catch (error) {
     next(error);
   }
