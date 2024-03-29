@@ -4,6 +4,7 @@ import { ApiResponseHandler } from "../utils/ApiResponse.js";
 import { requiredFieldsChecker } from "../utils/requiredFieldsChecker.js";
 import jwt from "jsonwebtoken";
 import { Result } from "../utils/result.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 const sanitizeUser = (user) => {
   const sanitizedUser = user.toObject();
@@ -269,6 +270,89 @@ export const getCurrentUser = async (req, res, next) => {
       status: 200,
       message: "User logged in successfully",
       data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateUser = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    const { fullName, username, email, bio } = req.body;
+    const avatar = req.file;
+
+    /* Check for username */
+    if (username) {
+      const usernameCheckQuery = { _id: { $ne: user._id }, username: username };
+      const existingUserWithUsername = await userModel
+        .findOne(usernameCheckQuery)
+        .lean();
+      if (existingUserWithUsername) {
+        throw new CustomError({
+          status: 400,
+          message: "Username already taken",
+        });
+      }
+
+      user.email = email;
+    }
+
+    /* Check for email */
+    if (email) {
+      const emailCheckQuery = { _id: { $ne: user.email }, email: email };
+      const existingUserWithEmail = await userModel
+        .findOne(emailCheckQuery)
+        .lean();
+      if (existingUserWithEmail) {
+        throw new CustomError({
+          status: 400,
+          message: "Email is already in use",
+        });
+      }
+      user.email = email;
+    }
+
+    /* Check for avatar */
+    if (avatar) {
+      const avatarLocalPath = avatar.path;
+      const avatarUploadResult = await uploadToCloudinary({
+        localFilePath: avatarLocalPath,
+      });
+      if (!avatarUploadResult.success) {
+        throw new CustomError({
+          status: 500,
+          message: avatarUploadResult.message,
+        });
+      }
+      const avatarUrl = avatarUploadResult.data.url;
+      user.avatar = avatarUrl;
+    }
+
+    if (fullName) {
+      user.fullName = fullName;
+    }
+
+    if (bio) {
+      user.bio = bio;
+    }
+
+    const updatedUser = await user.save();
+    if (!updatedUser) {
+      throw new CustomError({
+        status: 500,
+        message: "Could not update user details",
+      });
+    }
+
+    const sanitizedUser = sanitizeUser(updatedUser);
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: "User updated successfully",
+      data: sanitizedUser,
     });
   } catch (error) {
     next(error);
