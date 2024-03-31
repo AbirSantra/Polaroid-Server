@@ -21,7 +21,7 @@ export const tokenAuthorizer = async (req, res, next) => {
       process.env.ACCESS_SECRET,
       async (error, decoded) => {
         if (error) {
-          new CustomError({
+          throw new CustomError({
             status: 403,
             message: "Access token expired!",
           });
@@ -32,7 +32,7 @@ export const tokenAuthorizer = async (req, res, next) => {
           .select("-password -refreshToken");
 
         if (!user) {
-          new CustomError({
+          throw new CustomError({
             status: 401,
             message: "Access token invalid!",
           });
