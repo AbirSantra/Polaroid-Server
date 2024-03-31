@@ -283,6 +283,8 @@ export const updateUser = async (req, res, next) => {
     const { fullName, username, email, bio } = req.body;
     const avatar = req.file;
 
+    console.log(req.file);
+
     /* Check for username */
     if (username) {
       const usernameCheckQuery = { _id: { $ne: user._id }, username: username };
@@ -296,12 +298,12 @@ export const updateUser = async (req, res, next) => {
         });
       }
 
-      user.email = email;
+      user.username = username;
     }
 
     /* Check for email */
     if (email) {
-      const emailCheckQuery = { _id: { $ne: user.email }, email: email };
+      const emailCheckQuery = { _id: { $ne: user._id }, email: email };
       const existingUserWithEmail = await userModel
         .findOne(emailCheckQuery)
         .lean();
@@ -337,6 +339,8 @@ export const updateUser = async (req, res, next) => {
     if (bio) {
       user.bio = bio;
     }
+
+    console.log(user);
 
     const updatedUser = await user.save();
     if (!updatedUser) {
