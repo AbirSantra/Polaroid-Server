@@ -362,3 +362,34 @@ export const updateUser = async (req, res, next) => {
     next(error);
   }
 };
+
+export const changePassword = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const { currentPassword, newPassword } = req.body;
+
+    const existingUser = await userModel.findById(user._id);
+
+    const isPasswordCorrect =
+      await existingUser.isPasswordCorrect(currentPassword);
+    if (!isPasswordCorrect) {
+      throw new CustomError({
+        status: 400,
+        message: "Current password is incorrect!",
+      });
+    }
+
+    existingUser.password = newPassword;
+
+    await existingUser.save();
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully updated password!`,
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};

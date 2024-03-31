@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  changePassword,
   getCurrentUser,
   loginUser,
   logoutUser,
@@ -23,5 +24,7 @@ userRouter.post("/refresh", refreshAccessToken);
 userRouter.get("/current", tokenAuthorizer, getCurrentUser);
 
 userRouter.patch("/update", tokenAuthorizer, upload.single("file"), updateUser);
+
+userRouter.patch("/password", tokenAuthorizer, changePassword);
 
 export { userRouter };
