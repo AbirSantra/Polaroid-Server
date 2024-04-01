@@ -393,3 +393,27 @@ export const changePassword = async (req, res, next) => {
     next(error);
   }
 };
+
+export const deleteUser = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    const deletionQuery = { _id: user._id };
+    const deletedUser = await userModel.findOneAndDelete(deletionQuery);
+    if (!deletedUser) {
+      throw new CustomError({
+        status: 500,
+        message: `Could not delete user: ${deletedUser}`,
+      });
+    }
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully deleted user: ${deleteUser.username}`,
+      data: deletedUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
