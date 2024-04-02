@@ -64,6 +64,10 @@ const userSchema = new mongooose.Schema(
         }`;
       },
     },
+    avatarId: {
+      type: String,
+      default: null,
+    },
     bio: {
       type: String,
     },

@@ -4,7 +4,10 @@ import { ApiResponseHandler } from "../utils/ApiResponse.js";
 import { requiredFieldsChecker } from "../utils/requiredFieldsChecker.js";
 import jwt from "jsonwebtoken";
 import { Result } from "../utils/result.js";
-import { uploadToCloudinary } from "../utils/cloudinary.js";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "../utils/cloudinary.js";
 
 const sanitizeUser = (user) => {
   const sanitizedUser = user.toObject();
@@ -283,8 +286,6 @@ export const updateUser = async (req, res, next) => {
     const { fullName, username, email, bio } = req.body;
     const avatar = req.file;
 
-    console.log(req.file);
-
     /* Check for username */
     if (username) {
       const usernameCheckQuery = { _id: { $ne: user._id }, username: username };
@@ -328,8 +329,15 @@ export const updateUser = async (req, res, next) => {
           message: avatarUploadResult.message,
         });
       }
+
+      const oldAvatarDeleteResult = await deleteFromCloudinary({
+        avatarId: user.avatarId,
+      });
+
       const avatarUrl = avatarUploadResult.data.url;
+      const avatarId = avatarUploadResult.data.public_id;
       user.avatar = avatarUrl;
+      user.avatarId = avatarId;
     }
 
     if (fullName) {
@@ -339,8 +347,6 @@ export const updateUser = async (req, res, next) => {
     if (bio) {
       user.bio = bio;
     }
-
-    console.log(user);
 
     const updatedUser = await user.save();
     if (!updatedUser) {

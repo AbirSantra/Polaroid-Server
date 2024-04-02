@@ -2,6 +2,9 @@ import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import { Result } from "./result.js";
 import { CustomError } from "./ApiError.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -20,6 +23,7 @@ export const uploadToCloudinary = async ({ localFilePath }) => {
 
     const uploadResult = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto",
+      use_filename: true,
     });
 
     fs.unlinkSync(localFilePath);
@@ -31,6 +35,26 @@ export const uploadToCloudinary = async ({ localFilePath }) => {
     });
   } catch (error) {
     fs.unlinkSync(localFilePath);
+    return new Result({
+      status: error.status,
+      message: error.message,
+    });
+  }
+};
+
+export const deleteFromCloudinary = async ({ avatarId }) => {
+  try {
+    if (avatarId) {
+      const deleteResult = await cloudinary.uploader.destroy(avatarId);
+
+      return new Result({
+        status: 200,
+        success: true,
+        message: `File deleted successfully.`,
+        data: deleteResult,
+      });
+    }
+  } catch (error) {
     return new Result({
       status: error.status,
       message: error.message,
