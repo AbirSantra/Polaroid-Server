@@ -6,6 +6,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { ApiErrorHandler } from "./utils/ApiError.js";
 import { userRouter } from "./routes/user.route.js";
+import { postRouter } from "./routes/post.route.js";
 
 /* SERVER INITIALIZATION */
 const app = express();
@@ -26,6 +27,7 @@ app.use(cookieParser());
 
 /* ROUTES */
 app.use("/api/user", userRouter);
+app.use("/api/post", postRouter);
 
 /* HANDLERS */
 app.use(ApiErrorHandler);
