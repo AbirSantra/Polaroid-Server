@@ -331,7 +331,7 @@ export const updateUser = async (req, res, next) => {
       }
 
       const oldAvatarDeleteResult = await deleteFromCloudinary({
-        avatarId: user.avatarId,
+        imageId: user.avatarId,
       });
 
       const avatarUrl = avatarUploadResult.data.url;

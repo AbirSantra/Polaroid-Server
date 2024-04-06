@@ -42,10 +42,10 @@ export const uploadToCloudinary = async ({ localFilePath }) => {
   }
 };
 
-export const deleteFromCloudinary = async ({ avatarId }) => {
+export const deleteFromCloudinary = async ({ imageId }) => {
   try {
-    if (avatarId) {
-      const deleteResult = await cloudinary.uploader.destroy(avatarId);
+    if (imageId) {
+      const deleteResult = await cloudinary.uploader.destroy(imageId);
 
       return new Result({
         status: 200,

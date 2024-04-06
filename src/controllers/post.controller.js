@@ -1,7 +1,10 @@
 import { postModel } from "../models/post.model.js";
 import { CustomError } from "../utils/ApiError.js";
 import { ApiResponseHandler } from "../utils/ApiResponse.js";
-import { uploadToCloudinary } from "../utils/cloudinary.js";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "../utils/cloudinary.js";
 import { requiredFieldsChecker } from "../utils/requiredFieldsChecker.js";
 
 export const createPost = async (req, res, next) => {
@@ -57,6 +60,115 @@ export const createPost = async (req, res, next) => {
       status: 200,
       message: "Post created successfully!",
       data: newPost,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updatePost = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    const { postId, content } = req.body;
+    const postImage = req.file;
+
+    const existingPost = await postModel.findById(postId);
+    if (!existingPost) {
+      throw new CustomError({
+        status: 400,
+        message: "Post not found!",
+      });
+    }
+
+    existingPost.content = content;
+
+    if (postImage) {
+      const postImageLocalPath = postImage.path;
+      const postImageUploadResult = await uploadToCloudinary({
+        localFilePath: postImageLocalPath,
+      });
+      if (!postImageUploadResult.success) {
+        throw new CustomError({
+          status: 500,
+          message: "Post Image",
+        });
+      }
+
+      const oldPostImageDeleteResult = await deleteFromCloudinary({
+        imageId: existingPost.imageId,
+      });
+
+      const postImageUrl = postImageUploadResult.data.url;
+      const postImageId = postImageUploadResult.data.public_id;
+      existingPost.imageUrl = postImageUrl;
+      existingPost.imageId = postImageId;
+    }
+
+    const updatedPost = await existingPost.save();
+    if (!updatedPost) {
+      throw new CustomError({
+        status: 500,
+        message: "Could not update post",
+      });
+    }
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Post updated successfully!`,
+      data: updatedPost,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deletePost = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    const { postId } = req.body;
+
+    const deleteQuery = { _id: postId, user: user._id };
+    const deletedPost = await postModel.findOneAndDelete(deleteQuery);
+    if (!deletedPost) {
+      throw new CustomError({
+        status: 500,
+        message: `Could not delete this post!`,
+      });
+    }
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully deleted post!`,
+      data: deletedPost,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllPosts = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    const allPosts = await postModel
+      .find({}, null, {
+        sort: { createdAt: -1 },
+      })
+      .populate({
+        path: "user",
+        select: "_id username avatar fullName email",
+      })
+      .exec();
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully retrived all posts!`,
+      data: allPosts,
     });
   } catch (error) {
     next(error);
