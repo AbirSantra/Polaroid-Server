@@ -128,15 +128,25 @@ export const deletePost = async (req, res, next) => {
   try {
     const user = req.user;
 
-    const { postId } = req.body;
+    const { _id } = req.body;
 
-    const deleteQuery = { _id: postId, user: user._id };
+    const deleteQuery = { _id: _id, user: user._id };
     const deletedPost = await postModel.findOneAndDelete(deleteQuery);
+
     if (!deletedPost) {
       throw new CustomError({
         status: 500,
         message: `Could not delete this post!`,
       });
+    }
+
+    if (deletedPost.imageId) {
+      const oldPostImageDeleteResult = await deleteFromCloudinary({
+        imageId: deletedPost.imageId,
+      });
+      if (!oldPostImageDeleteResult.success) {
+        console.log("Could not delete post image from cloudinary!");
+      }
     }
 
     ApiResponseHandler({
