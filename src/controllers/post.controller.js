@@ -70,10 +70,10 @@ export const updatePost = async (req, res, next) => {
   try {
     const user = req.user;
 
-    const { postId, content } = req.body;
+    const { _id, content } = req.body;
     const postImage = req.file;
 
-    const existingPost = await postModel.findById(postId);
+    const existingPost = await postModel.findById(_id);
     if (!existingPost) {
       throw new CustomError({
         status: 400,
