@@ -11,6 +11,8 @@ export const createPost = async (req, res, next) => {
   try {
     const user = req.user;
 
+    requiredFieldsChecker(req, ["content"]);
+
     const { content } = req.body;
     const postImage = req.file;
 
@@ -70,6 +72,8 @@ export const updatePost = async (req, res, next) => {
   try {
     const user = req.user;
 
+    requiredFieldsChecker(req, ["_id"]);
+
     const { _id, content } = req.body;
     const postImage = req.file;
 
@@ -127,6 +131,8 @@ export const updatePost = async (req, res, next) => {
 export const deletePost = async (req, res, next) => {
   try {
     const user = req.user;
+
+    requiredFieldsChecker(req, ["_id"]);
 
     const { _id } = req.body;
 

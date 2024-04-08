@@ -373,6 +373,7 @@ export const changePassword = async (req, res, next) => {
   try {
     const user = req.user;
     const { currentPassword, newPassword } = req.body;
+    requiredFieldsChecker(req, ["currentPassword", "newPassword"]);
 
     const existingUser = await userModel.findById(user._id);
 
