@@ -4,6 +4,7 @@ import {
   createPost,
   deletePost,
   getAllPosts,
+  likePost,
   updatePost,
 } from "../controllers/post.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -17,5 +18,7 @@ postRouter.patch("/update", tokenAuthorizer, upload.single("file"), updatePost);
 postRouter.post("/delete", tokenAuthorizer, deletePost);
 
 postRouter.get("/all", tokenAuthorizer, getAllPosts);
+
+postRouter.post("/like", tokenAuthorizer, likePost);
 
 export { postRouter };

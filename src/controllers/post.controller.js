@@ -1,3 +1,4 @@
+import { likeModel } from "../models/like.model.js";
 import { postModel } from "../models/post.model.js";
 import { CustomError } from "../utils/ApiError.js";
 import { ApiResponseHandler } from "../utils/ApiResponse.js";
@@ -186,6 +187,70 @@ export const getAllPosts = async (req, res, next) => {
       message: `Successfully retrived all posts!`,
       data: allPosts,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const likePost = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    requiredFieldsChecker(req, ["postId"]);
+
+    const { postId } = req.body;
+
+    /* Check if the post exists */
+    const existingPost = await postModel.findById(postId);
+    if (!existingPost) {
+      throw new CustomError({
+        status: 500,
+        message: `Failed to like post! Reason: Post does not exist!`,
+      });
+    }
+
+    /* Check if post is already liked */
+    const existingLike = await likeModel.findOne({
+      post: existingPost._id,
+      user: user._id,
+    });
+    if (existingLike) {
+      const unlike = await likeModel.findByIdAndDelete(existingLike._id);
+      if (!unlike) {
+        throw new CustomError({
+          status: 500,
+          message: `Failed to unlike post! Reason: Could not delete like`,
+        });
+      }
+
+      ApiResponseHandler({
+        res: res,
+        status: 200,
+        message: `Successfully unliked post!`,
+        data: unlike,
+      });
+    } else {
+      /* Create like document */
+      const likeDoc = new likeModel({
+        post: existingPost._id,
+        user: user._id,
+      });
+
+      const newLike = await likeDoc.save();
+      if (!newLike) {
+        throw new CustomError({
+          status: 500,
+          message: `Failed to like post! Reason: Could not save like`,
+        });
+      }
+
+      ApiResponseHandler({
+        res: res,
+        status: 200,
+        message: `Successfully liked post!`,
+        data: newLike,
+      });
+    }
   } catch (error) {
     next(error);
   }
