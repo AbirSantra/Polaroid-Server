@@ -4,6 +4,7 @@ import {
   createPost,
   deletePost,
   getAllPosts,
+  getTrendingPosts,
   likePost,
   updatePost,
 } from "../controllers/post.controller.js";
@@ -18,6 +19,8 @@ postRouter.patch("/update", tokenAuthorizer, upload.single("file"), updatePost);
 postRouter.post("/delete", tokenAuthorizer, deletePost);
 
 postRouter.get("/all", tokenAuthorizer, getAllPosts);
+
+postRouter.get("/trending", tokenAuthorizer, getTrendingPosts);
 
 postRouter.post("/like", tokenAuthorizer, likePost);
 

@@ -192,6 +192,55 @@ export const getAllPosts = async (req, res, next) => {
   }
 };
 
+export const getTrendingPosts = async (req, res, next) => {
+  try {
+    const allTrendingPosts = await postModel.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $lookup: {
+          from: "likes",
+          localField: "_id",
+          foreignField: "post",
+          as: "likes",
+        },
+      },
+      {
+        $addFields: {
+          likesCount: { $size: "$likes" },
+          user: { $arrayElemAt: ["$user", 0] },
+        },
+      },
+      {
+        $project: {
+          "user.password": 0,
+          "user.refreshToken": 0,
+        },
+      },
+      {
+        $sort: {
+          likesCount: -1,
+        },
+      },
+    ]);
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully retrieved trending posts`,
+      data: allTrendingPosts,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const likePost = async (req, res, next) => {
   try {
     const user = req.user;
