@@ -226,6 +226,7 @@ export const getTrendingPosts = async (req, res, next) => {
       {
         $sort: {
           likesCount: -1,
+          createdAt: -1,
         },
       },
     ]);
