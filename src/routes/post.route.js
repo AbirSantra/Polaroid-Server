@@ -1,6 +1,7 @@
 import express from "express";
 import { tokenAuthorizer } from "../middlewares/tokenAuthorizer.middleware.js";
 import {
+  createComment,
   createPost,
   deletePost,
   getAllPosts,
@@ -23,5 +24,7 @@ postRouter.get("/all", tokenAuthorizer, getAllPosts);
 postRouter.get("/trending", tokenAuthorizer, getTrendingPosts);
 
 postRouter.post("/like", tokenAuthorizer, likePost);
+
+postRouter.post("/comment", tokenAuthorizer, createComment);
 
 export { postRouter };

@@ -1,3 +1,4 @@
+import { commentModel } from "../models/comment.model.js";
 import { likeModel } from "../models/like.model.js";
 import { postModel } from "../models/post.model.js";
 import { CustomError } from "../utils/ApiError.js";
@@ -301,6 +302,48 @@ export const likePost = async (req, res, next) => {
         data: newLike,
       });
     }
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createComment = async (req, res, next) => {
+  try {
+    requiredFieldsChecker(req, ["postId", "content"]);
+
+    const user = req.user;
+    const { postId, content } = req.body;
+
+    /* Check if the post exists */
+    const existingPost = await postModel.findById(postId);
+    if (!existingPost) {
+      throw new CustomError({
+        status: 500,
+        message: `Failed to comment on post! Reason: Post does not exist!`,
+      });
+    }
+
+    /* Create new comment document */
+    const commentDoc = new commentModel({
+      content: content,
+      post: existingPost._id,
+      user: user._id,
+    });
+
+    const newComment = await commentDoc.save();
+    if (!newComment) {
+      throw new CustomError({
+        status: 500,
+        message: `Failed to comment on post. Reason: Comment could not be saved`,
+      });
+    }
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully commented on post!`,
+      data: newComment,
+    });
   } catch (error) {
     next(error);
   }
