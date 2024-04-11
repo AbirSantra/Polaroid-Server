@@ -213,8 +213,17 @@ export const getTrendingPosts = async (req, res, next) => {
         },
       },
       {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "post",
+          as: "comments",
+        },
+      },
+      {
         $addFields: {
           likesCount: { $size: "$likes" },
+          commentsCount: { $size: "$comments" },
           user: { $arrayElemAt: ["$user", 0] },
         },
       },
