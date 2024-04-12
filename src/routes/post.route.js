@@ -5,6 +5,8 @@ import {
   createPost,
   deletePost,
   getAllPosts,
+  getPost,
+  getPostComments,
   getTrendingPosts,
   likePost,
   savePost,
@@ -13,6 +15,8 @@ import {
 import { upload } from "../middlewares/multer.middleware.js";
 
 const postRouter = express.Router();
+
+postRouter.post("/", getPost);
 
 postRouter.post("/create", tokenAuthorizer, upload.single("file"), createPost);
 
@@ -29,5 +33,7 @@ postRouter.post("/like", tokenAuthorizer, likePost);
 postRouter.post("/comment", tokenAuthorizer, createComment);
 
 postRouter.post("/save", tokenAuthorizer, savePost);
+
+postRouter.post("/comments", getPostComments);
 
 export { postRouter };

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { commentModel } from "../models/comment.model.js";
 import { likeModel } from "../models/like.model.js";
 import { postModel } from "../models/post.model.js";
@@ -261,6 +262,81 @@ export const getTrendingPosts = async (req, res, next) => {
   }
 };
 
+export const getPost = async (req, res, next) => {
+  try {
+    requiredFieldsChecker(req, ["postId"]);
+
+    const { postId } = req.body;
+
+    const postResult = await postModel.aggregate([
+      {
+        $match: { _id: new mongoose.Types.ObjectId(postId) },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $lookup: {
+          from: "likes",
+          localField: "_id",
+          foreignField: "post",
+          as: "likes",
+        },
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "post",
+          as: "comments",
+        },
+      },
+      {
+        $lookup: {
+          from: "saves",
+          localField: "_id",
+          foreignField: "post",
+          as: "saves",
+        },
+      },
+      {
+        $addFields: {
+          likesCount: { $size: "$likes" },
+          commentsCount: { $size: "$comments" },
+          user: { $arrayElemAt: ["$user", 0] },
+        },
+      },
+      {
+        $project: {
+          "user.password": 0,
+          "user.refreshToken": 0,
+        },
+      },
+    ]);
+
+    if (postResult.length === 0) {
+      throw new CustomError({
+        status: 500,
+        message: `Post not found!`,
+      });
+    }
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully retrieved post`,
+      data: postResult[0],
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const likePost = async (req, res, next) => {
   try {
     const user = req.user;
@@ -424,6 +500,33 @@ export const createComment = async (req, res, next) => {
       status: 200,
       message: `Successfully commented on post!`,
       data: newComment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPostComments = async (req, res, next) => {
+  try {
+    requiredFieldsChecker(req, ["postId"]);
+
+    const { postId } = req.body;
+
+    const comments = await commentModel
+      .find({ post: postId }, null, {
+        sort: { createdAt: -1 },
+      })
+      .populate({
+        path: "user",
+        select: "_id username avatar fullName email",
+      })
+      .exec();
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully retrieved all comments`,
+      data: comments,
     });
   } catch (error) {
     next(error);
