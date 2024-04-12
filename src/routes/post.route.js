@@ -7,6 +7,7 @@ import {
   getAllPosts,
   getTrendingPosts,
   likePost,
+  savePost,
   updatePost,
 } from "../controllers/post.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -26,5 +27,7 @@ postRouter.get("/trending", tokenAuthorizer, getTrendingPosts);
 postRouter.post("/like", tokenAuthorizer, likePost);
 
 postRouter.post("/comment", tokenAuthorizer, createComment);
+
+postRouter.post("/save", tokenAuthorizer, savePost);
 
 export { postRouter };

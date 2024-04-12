@@ -1,6 +1,7 @@
 import { commentModel } from "../models/comment.model.js";
 import { likeModel } from "../models/like.model.js";
 import { postModel } from "../models/post.model.js";
+import { saveModel } from "../models/save.model.js";
 import { CustomError } from "../utils/ApiError.js";
 import { ApiResponseHandler } from "../utils/ApiResponse.js";
 import {
@@ -221,6 +222,14 @@ export const getTrendingPosts = async (req, res, next) => {
         },
       },
       {
+        $lookup: {
+          from: "saves",
+          localField: "_id",
+          foreignField: "post",
+          as: "saves",
+        },
+      },
+      {
         $addFields: {
           likesCount: { $size: "$likes" },
           commentsCount: { $size: "$comments" },
@@ -309,6 +318,69 @@ export const likePost = async (req, res, next) => {
         status: 200,
         message: `Successfully liked post!`,
         data: newLike,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const savePost = async (req, res, next) => {
+  try {
+    requiredFieldsChecker(req, ["postId"]);
+
+    const user = req.user;
+    const { postId } = req.body;
+
+    /* Check if the post exists */
+    const existingPost = await postModel.findById(postId);
+    if (!existingPost) {
+      throw new CustomError({
+        status: 500,
+        message: `Failed to like post! Reason: Post does not exist!`,
+      });
+    }
+
+    const existingSave = await saveModel.findOne({
+      post: existingPost._id,
+      user: user._id,
+    });
+    if (existingSave) {
+      /* Post is already saved by user. Unsave post */
+      const unsave = await saveModel.findByIdAndDelete(existingSave._id);
+      if (!unsave) {
+        throw new CustomError({
+          status: 500,
+          message: `Failed to unsave post. Reason: Could not delete saved post`,
+        });
+      }
+
+      ApiResponseHandler({
+        res: res,
+        status: 200,
+        message: `Successfully unsaved post!`,
+        data: unsave,
+      });
+    } else {
+      /* Post is not already saved by user. Save post */
+      const saveDoc = new saveModel({
+        user: user._id,
+        post: existingPost._id,
+      });
+
+      const newSave = await saveDoc.save();
+      if (!newSave) {
+        throw new CustomError({
+          status: 500,
+          message: `Failed to save post! Reason: Could not save post!`,
+        });
+      }
+
+      ApiResponseHandler({
+        res: res,
+        status: 200,
+        message: `Successfully saved post!`,
+        data: newSave,
       });
     }
   } catch (error) {
