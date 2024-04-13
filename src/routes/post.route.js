@@ -8,6 +8,7 @@ import {
   getPost,
   getPostComments,
   getTrendingPosts,
+  getUserPosts,
   likePost,
   savePost,
   updatePost,
@@ -35,5 +36,7 @@ postRouter.post("/comment", tokenAuthorizer, createComment);
 postRouter.post("/save", tokenAuthorizer, savePost);
 
 postRouter.post("/comments", getPostComments);
+
+postRouter.post("/posts", tokenAuthorizer, getUserPosts);
 
 export { postRouter };
