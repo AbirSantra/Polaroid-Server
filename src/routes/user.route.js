@@ -3,6 +3,7 @@ import {
   changePassword,
   deleteUser,
   getCurrentUser,
+  getUserProfile,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -29,5 +30,7 @@ userRouter.patch("/update", tokenAuthorizer, upload.single("file"), updateUser);
 userRouter.patch("/password", tokenAuthorizer, changePassword);
 
 userRouter.delete("/delete", tokenAuthorizer, deleteUser);
+
+userRouter.post("/profile", tokenAuthorizer, getUserProfile);
 
 export { userRouter };

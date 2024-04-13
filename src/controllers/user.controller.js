@@ -8,6 +8,7 @@ import {
   deleteFromCloudinary,
   uploadToCloudinary,
 } from "../utils/cloudinary.js";
+import mongoose from "mongoose";
 
 const sanitizeUser = (user) => {
   const sanitizedUser = user.toObject();
@@ -419,6 +420,64 @@ export const deleteUser = async (req, res, next) => {
       status: 200,
       message: `Successfully deleted user: ${deleteUser.username}`,
       data: deletedUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUserProfile = async (req, res, next) => {
+  try {
+    requiredFieldsChecker(req, ["userId"]);
+
+    const { userId } = req.body;
+
+    const userProfile = await userModel.aggregate([
+      {
+        $match: { _id: new mongoose.Types.ObjectId(userId) },
+      },
+      {
+        $lookup: {
+          from: "follows",
+          localField: "_id",
+          foreignField: "following",
+          as: "followers",
+        },
+      },
+      {
+        $lookup: {
+          from: "follows",
+          localField: "_id",
+          foreignField: "user",
+          as: "followings",
+        },
+      },
+      {
+        $addFields: {
+          followersCount: { $size: "$followers" },
+          followingsCount: { $size: "$followings" },
+        },
+      },
+      {
+        $project: {
+          password: 0,
+          refreshToken: 0,
+        },
+      },
+    ]);
+
+    if (userProfile.length === 0) {
+      throw new CustomError({
+        status: 500,
+        message: `User not found!`,
+      });
+    }
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully retrieved user profile`,
+      data: userProfile[0],
     });
   } catch (error) {
     next(error);
