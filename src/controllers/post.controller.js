@@ -603,3 +603,80 @@ export const getUserPosts = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getUserSaves = async (req, res, next) => {
+  try {
+    requiredFieldsChecker(req, ["userId"]);
+
+    const { userId } = req.body;
+
+    const saves = await saveModel.find({
+      user: userId,
+    });
+
+    const postIds = saves.map((save) => save.post);
+
+    const allUserSaves = await postModel.aggregate([
+      { $match: { _id: { $in: postIds } } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $lookup: {
+          from: "likes",
+          localField: "_id",
+          foreignField: "post",
+          as: "likes",
+        },
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "post",
+          as: "comments",
+        },
+      },
+      {
+        $lookup: {
+          from: "saves",
+          localField: "_id",
+          foreignField: "post",
+          as: "saves",
+        },
+      },
+      {
+        $addFields: {
+          likesCount: { $size: "$likes" },
+          commentsCount: { $size: "$comments" },
+          user: { $arrayElemAt: ["$user", 0] },
+        },
+      },
+      {
+        $project: {
+          "user.password": 0,
+          "user.refreshToken": 0,
+        },
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+    ]);
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully retrieved user saves`,
+      data: allUserSaves,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
