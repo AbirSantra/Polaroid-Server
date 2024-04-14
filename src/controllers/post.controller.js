@@ -10,6 +10,7 @@ import {
   uploadToCloudinary,
 } from "../utils/cloudinary.js";
 import { requiredFieldsChecker } from "../utils/requiredFieldsChecker.js";
+import { followModel } from "../models/follow.model.js";
 
 export const createPost = async (req, res, next) => {
   try {
@@ -675,6 +676,81 @@ export const getUserSaves = async (req, res, next) => {
       status: 200,
       message: `Successfully retrieved user saves`,
       data: allUserSaves,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getFollowingPosts = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    const follows = await followModel.find({
+      user: user._id,
+    });
+
+    const userIds = follows.map((follow) => follow.following);
+
+    const allFollowingPosts = await postModel.aggregate([
+      { $match: { user: { $in: userIds } } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $lookup: {
+          from: "likes",
+          localField: "_id",
+          foreignField: "post",
+          as: "likes",
+        },
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "post",
+          as: "comments",
+        },
+      },
+      {
+        $lookup: {
+          from: "saves",
+          localField: "_id",
+          foreignField: "post",
+          as: "saves",
+        },
+      },
+      {
+        $addFields: {
+          likesCount: { $size: "$likes" },
+          commentsCount: { $size: "$comments" },
+          user: { $arrayElemAt: ["$user", 0] },
+        },
+      },
+      {
+        $project: {
+          "user.password": 0,
+          "user.refreshToken": 0,
+        },
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+    ]);
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully retrieved following posts`,
+      data: allFollowingPosts,
     });
   } catch (error) {
     next(error);

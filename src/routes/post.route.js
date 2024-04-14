@@ -5,6 +5,7 @@ import {
   createPost,
   deletePost,
   getAllPosts,
+  getFollowingPosts,
   getPost,
   getPostComments,
   getTrendingPosts,
@@ -29,6 +30,8 @@ postRouter.post("/delete", tokenAuthorizer, deletePost);
 postRouter.get("/all", tokenAuthorizer, getAllPosts);
 
 postRouter.get("/trending", tokenAuthorizer, getTrendingPosts);
+
+postRouter.get("/following", tokenAuthorizer, getFollowingPosts);
 
 postRouter.post("/like", tokenAuthorizer, likePost);
 
