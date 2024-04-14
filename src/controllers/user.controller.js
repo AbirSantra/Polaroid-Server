@@ -9,6 +9,7 @@ import {
   uploadToCloudinary,
 } from "../utils/cloudinary.js";
 import mongoose from "mongoose";
+import { followModel } from "../models/follow.model.js";
 
 const sanitizeUser = (user) => {
   const sanitizedUser = user.toObject();
@@ -479,6 +480,76 @@ export const getUserProfile = async (req, res, next) => {
       message: `Successfully retrieved user profile`,
       data: userProfile[0],
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const followUser = async (req, res, next) => {
+  try {
+    requiredFieldsChecker(req, ["userId"]);
+
+    const user = req.user;
+    const { userId } = req.body;
+
+    /* Check if the user exists */
+    const existingUser = await userModel.findById(userId);
+    if (!existingUser) {
+      throw new CustomError({
+        status: 500,
+        message: `Failed to follow user! Reason: User does not exist!`,
+      });
+    }
+
+    if (existingUser._id.toString() === user._id.toString()) {
+      throw new CustomError({
+        status: 500,
+        message: `Failed to follow user! Reason: User cannot follow themselves`,
+      });
+    }
+
+    const existingFollow = await followModel.findOne({
+      following: existingUser._id,
+      user: user._id,
+    });
+    if (existingFollow) {
+      /* User is already followed by current user. Unfollow user */
+      const unfollow = await followModel.findByIdAndDelete(existingFollow._id);
+      if (!unfollow) {
+        throw new CustomError({
+          status: 500,
+          message: `Failed to unfollow user. Reason: Could not delete follow`,
+        });
+      }
+
+      ApiResponseHandler({
+        res: res,
+        status: 200,
+        message: `Successfully unfollowed user!`,
+        data: unfollow,
+      });
+    } else {
+      /* User is not already followed by current user. Follow user */
+      const followDoc = new followModel({
+        user: user._id,
+        following: existingUser._id,
+      });
+
+      const newFollow = await followDoc.save();
+      if (!newFollow) {
+        throw new CustomError({
+          status: 500,
+          message: `Failed to follow user! Reason: Could not follow user!`,
+        });
+      }
+
+      ApiResponseHandler({
+        res: res,
+        status: 200,
+        message: `Successfully followed user!`,
+        data: newFollow,
+      });
+    }
   } catch (error) {
     next(error);
   }
