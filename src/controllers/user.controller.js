@@ -554,3 +554,29 @@ export const followUser = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getSuggestedUsers = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    const follows = await followModel.find({
+      user: user._id,
+    });
+
+    const followedUserIds = follows.map((follow) => follow.following);
+
+    const suggestedUsers = await userModel
+      .find({ _id: { $ne: user._id, $nin: followedUserIds } })
+      .limit(4)
+      .exec();
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully retrieved all suggested users`,
+      data: suggestedUsers,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

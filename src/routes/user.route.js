@@ -4,6 +4,7 @@ import {
   deleteUser,
   followUser,
   getCurrentUser,
+  getSuggestedUsers,
   getUserProfile,
   loginUser,
   logoutUser,
@@ -35,5 +36,7 @@ userRouter.delete("/delete", tokenAuthorizer, deleteUser);
 userRouter.post("/profile", tokenAuthorizer, getUserProfile);
 
 userRouter.post("/follow", tokenAuthorizer, followUser);
+
+userRouter.get("/suggested", tokenAuthorizer, getSuggestedUsers);
 
 export { userRouter };
