@@ -567,6 +567,7 @@ export const getSuggestedUsers = async (req, res, next) => {
 
     const suggestedUsers = await userModel
       .find({ _id: { $ne: user._id, $nin: followedUserIds } })
+      .select("-password -refreshToken")
       .limit(4)
       .exec();
 
@@ -575,6 +576,38 @@ export const getSuggestedUsers = async (req, res, next) => {
       status: 200,
       message: `Successfully retrieved all suggested users`,
       data: suggestedUsers,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUserFollowings = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    const follows = await followModel
+      .find({
+        user: user._id,
+      })
+      .lean();
+
+    const followedUserIds = follows.map((follow) => follow.following);
+
+    const followedUsers = await userModel
+      .find({
+        _id: { $ne: user._id, $in: followedUserIds },
+      })
+      .select("-password -refreshToken")
+      .limit(10)
+      .lean()
+      .exec();
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully retrieved users`,
+      data: followedUsers,
     });
   } catch (error) {
     next(error);

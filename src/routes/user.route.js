@@ -5,6 +5,7 @@ import {
   followUser,
   getCurrentUser,
   getSuggestedUsers,
+  getUserFollowings,
   getUserProfile,
   loginUser,
   logoutUser,
@@ -38,5 +39,7 @@ userRouter.post("/profile", tokenAuthorizer, getUserProfile);
 userRouter.post("/follow", tokenAuthorizer, followUser);
 
 userRouter.get("/suggested", tokenAuthorizer, getSuggestedUsers);
+
+userRouter.get("/following", tokenAuthorizer, getUserFollowings);
 
 export { userRouter };
