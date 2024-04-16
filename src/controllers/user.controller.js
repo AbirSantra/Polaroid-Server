@@ -613,3 +613,32 @@ export const getUserFollowings = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getSearchUsers = async (req, res, next) => {
+  try {
+    requiredFieldsChecker(req, ["searchTerm"]);
+
+    const user = req.user;
+
+    const searchTerm = req.body.searchTerm;
+
+    const users = await userModel
+      .find({
+        _id: { $ne: user._id },
+        $or: [
+          { username: { $regex: searchTerm, $options: "i" } }, // Case-insensitive search on username
+          { fullName: { $regex: searchTerm, $options: "i" } }, // Case-insensitive search on full name
+        ],
+      })
+      .exec();
+
+    ApiResponseHandler({
+      res: res,
+      status: 200,
+      message: `Successfully retrieved matching users`,
+      data: users,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
