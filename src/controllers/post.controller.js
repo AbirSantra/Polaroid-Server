@@ -11,6 +11,7 @@ import {
 } from "../utils/cloudinary.js";
 import { requiredFieldsChecker } from "../utils/requiredFieldsChecker.js";
 import { followModel } from "../models/follow.model.js";
+import { notificationModel } from "../models/notification.model.js";
 
 export const createPost = async (req, res, next) => {
   try {
@@ -390,6 +391,15 @@ export const likePost = async (req, res, next) => {
         });
       }
 
+      /* Create Like Notification */
+      const newNotif = new notificationModel({
+        type: "LIKE",
+        user: user._id,
+        recipient: existingPost.user,
+      });
+
+      await newNotif.save();
+
       ApiResponseHandler({
         res: res,
         status: 200,
@@ -495,6 +505,15 @@ export const createComment = async (req, res, next) => {
         message: `Failed to comment on post. Reason: Comment could not be saved`,
       });
     }
+
+    /* Create Comment Notification */
+    const newNotif = new notificationModel({
+      type: "COMMENT",
+      user: user._id,
+      recipient: existingPost.user,
+    });
+
+    await newNotif.save();
 
     ApiResponseHandler({
       res: res,

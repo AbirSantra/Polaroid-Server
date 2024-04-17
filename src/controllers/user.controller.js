@@ -10,6 +10,7 @@ import {
 } from "../utils/cloudinary.js";
 import mongoose from "mongoose";
 import { followModel } from "../models/follow.model.js";
+import { notificationModel } from "../models/notification.model.js";
 
 const sanitizeUser = (user) => {
   const sanitizedUser = user.toObject();
@@ -542,6 +543,15 @@ export const followUser = async (req, res, next) => {
           message: `Failed to follow user! Reason: Could not follow user!`,
         });
       }
+
+      /* Create Follow Notification */
+      const newNotif = new notificationModel({
+        type: "FOLLOW",
+        user: user._id,
+        recipient: existingUser._id,
+      });
+
+      await newNotif.save();
 
       ApiResponseHandler({
         res: res,
