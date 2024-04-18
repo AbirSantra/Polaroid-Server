@@ -8,6 +8,7 @@ import { ApiErrorHandler } from "./utils/ApiError.js";
 import { userRouter } from "./routes/user.route.js";
 import { postRouter } from "./routes/post.route.js";
 import { notificationRouter } from "./routes/notification.route.js";
+import { publicRouter } from "./routes/public.route.js";
 
 /* SERVER INITIALIZATION */
 const app = express();
@@ -27,6 +28,7 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 /* ROUTES */
+app.use("/api/public", publicRouter);
 app.use("/api/user", userRouter);
 app.use("/api/post", postRouter);
 app.use("/api/notification", notificationRouter);
