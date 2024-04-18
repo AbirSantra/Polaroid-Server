@@ -565,6 +565,15 @@ export const followUser = async (req, res, next) => {
   }
 };
 
+// Function to shuffle an array (Fisher-Yates algorithm)
+const shuffle = async (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
 export const getSuggestedUsers = async (req, res, next) => {
   try {
     const user = req.user;
@@ -575,11 +584,14 @@ export const getSuggestedUsers = async (req, res, next) => {
 
     const followedUserIds = follows.map((follow) => follow.following);
 
-    const suggestedUsers = await userModel
+    const users = await userModel
       .find({ _id: { $ne: user._id, $nin: followedUserIds } })
       .select("-password -refreshToken")
-      .limit(4)
       .exec();
+
+    const shuffledUsers = await shuffle(users);
+
+    const suggestedUsers = shuffledUsers.slice(0, 6);
 
     ApiResponseHandler({
       res: res,
