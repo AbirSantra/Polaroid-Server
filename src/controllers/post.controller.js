@@ -396,6 +396,7 @@ export const likePost = async (req, res, next) => {
         type: "LIKE",
         user: user._id,
         recipient: existingPost.user,
+        post: existingPost._id,
       });
 
       await newNotif.save();
@@ -511,6 +512,7 @@ export const createComment = async (req, res, next) => {
       type: "COMMENT",
       user: user._id,
       recipient: existingPost.user,
+      post: existingPost._id,
     });
 
     await newNotif.save();
