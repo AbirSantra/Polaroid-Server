@@ -197,6 +197,21 @@ export const getAllPosts = async (req, res, next) => {
   }
 };
 
+const calculateEngagementScore = (post) => {
+  const likesWeightage = 0.7;
+  const commentsWeightage = 0.3;
+  const totalLikes = post.likesCount + 1;
+  const totalComments = post.commentsCount + 1;
+
+  return totalLikes * likesWeightage + totalComments * commentsWeightage;
+};
+
+const applyTimeDecay = ({ engagementScore, hoursSincePost }) => {
+  const timeFactor = 3;
+  const decayedEngagementScore = engagementScore / Math.log(hoursSincePost + 1);
+  return decayedEngagementScore * timeFactor;
+};
+
 export const getTrendingPosts = async (req, res, next) => {
   try {
     const allTrendingPosts = await postModel.aggregate([
@@ -245,19 +260,30 @@ export const getTrendingPosts = async (req, res, next) => {
           "user.refreshToken": 0,
         },
       },
-      {
-        $sort: {
-          likesCount: -1,
-          createdAt: -1,
-        },
-      },
     ]);
+
+    const trendingPosts = allTrendingPosts.map((post) => {
+      const engagementScore = calculateEngagementScore(post);
+      const hoursSincePost =
+        (Date.now() - post.createdAt.getTime()) / (1000 * 3600);
+      const adjustedEngagementScore = applyTimeDecay({
+        engagementScore: engagementScore,
+        hoursSincePost: hoursSincePost,
+      });
+
+      return {
+        ...post,
+        score: adjustedEngagementScore,
+      };
+    });
+
+    trendingPosts.sort((a, b) => b.score - a.score);
 
     ApiResponseHandler({
       res: res,
       status: 200,
       message: `Successfully retrieved trending posts`,
-      data: allTrendingPosts,
+      data: trendingPosts,
     });
   } catch (error) {
     next(error);
